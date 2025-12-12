@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tickets Control - Controle de Chamados</title>
+    <link rel="stylesheet" href="Estilo.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/7755/7755915.png">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- CORREÇÃO: Usando CDN do CloudFlare para Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+</head>
+<body>
+    <div id="app">
+        <!-- Main Layout -->
+        <div id="main-layout" class="main-layout">
+            <!-- Sidebar -->
+            <aside id="sidebar" class="sidebar active">
+                <div class="sidebar-header">
+                    <div class="logo">
+                        <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/7755/7755915.png">
+                        <div class="logo-text">
+                            <h2>Controle de Chamados</h2>
+                 </div>
+                    </div>
+                    
+                </div>
+
+                <nav class="sidebar-nav">
+                    <div class="nav-group">
+                        <label class="nav-group-label">Menu Principal</label>
+                        <div class="nav-items">
+                            <a href="#dashboard" class="nav-item active" data-page="dashboard">
+                                <i class="nav-icon fas fa-chart-bar"></i>
+                                <span class="nav-text">Dashboard</span>
+                            </a>
+                            <a href="#chamados" class="nav-item" data-page="chamados">
+                                <i class="nav-icon fas fa-ticket-alt"></i>
+                                <span class="nav-text">Chamados</span>
+                            </a>
+                            <a href="#capturar" class="nav-item" data-page="capturar">
+                                <i class="nav-icon fas fa-file-export"></i>
+                                <span class="nav-text">Extrair Chamado</span>
+                            </a>
+                            <a href="#relatorios" class="nav-item" data-page="relatorios">
+                                <i class="nav-icon fas fa-chart-line"></i>
+                                <span class="nav-text">Relatórios</span>
+                            </a>
+                            <a href="#agendamentos" class="nav-item" data-page="agendamentos">
+                                <i class="nav-icon fas fa-calendar-alt"></i>
+                                <span class="nav-text">Agendamentos</span>
+                            </a>
+                        <!-- Dentro de .nav-items, após o item de Configurações -->
+<a href="#chamados-finalizados" class="nav-item" data-page="chamados-finalizados">
+    <i class="nav-icon fas fa-check-circle"></i>
+    <span class="nav-text">Chamados Finalizados</span>
+</a>
+                            <a href="#configuracoes" class="nav-item" data-page="configuracoes">
+                                <i class="nav-icon fas fa-cog"></i>
+                                <span class="nav-text">Configurações</span>
+                            </a>
+                        </div>
+                    </div>
+                </nav>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="main-content sidebar-active">
+                <!-- Top Header -->
+                <header class="top-header">
+                    <div class="header-left">
+                        <button id="sidebar-toggle" class="sidebar-toggle">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        <h1 id="page-title" class="page-title">Dashboard</h1>
+                    </div>
+                    <div class="header-right">
+                        <button id="open-mastermaq-btn" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-external-link-alt"></i>
+                            <span class="btn-text">Meu Espaço</span>
+                        </button>
+                     <div class="app-version">
+                            V<span id="app-version">1.3</span>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Page Content -->
+                <div class="page-content">
+                    <!-- Dashboard Page -->
+                    <div id="dashboard-page" class="page active">
+                        <div class="page-header">
+                            <div>
+                                <h2>Dashboard</h2>
+                                <p>Visão geral dos chamados e estatísticas do sistema</p>
+                            </div>
+                            <button id="refresh-dashboard" class="btn btn-secondary">
+    <i class="fas fa-sync-alt"></i>
+    <span class="btn-text">Atualizar</span>
+</button>
+                        </div>
+
+                        <!-- Stats Grid Principal -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-value" id="total-tickets">0</div>
+        <div class="stat-label">Total de Chamados</div>
+    </div>
+    <div class="stat-card clickable-card" data-status="Aguardando Cliente">
+        <div class="stat-value" id="open-tickets">0</div>
+        <div class="stat-label">Aguardando Cliente</div>
+    </div>
+    <div class="stat-card clickable-card" data-status="Retomar Atendimento">
+        <div class="stat-value" id="pending-tickets">0</div>
+        <div class="stat-label">Retomar Atendimento</div>
+    </div>
+    <div class="stat-card clickable-card" data-status="Finalizado">
+        <div class="stat-value" id="finished-tickets">0</div>
+        <div class="stat-label">Finalizado</div>
+    </div>
+    <div class="stat-card clickable-card" data-status="Em Analise">
+        <div class="stat-value" id="progress-tickets">0</div>
+        <div class="stat-label">Em Analise</div>
+    </div>
+    <!-- Status dinâmicos serão adicionados aqui via JavaScript -->
+</div>
+
+                        <!-- Gráficos do Dashboard -->
+                        <div class="content-grid">
+                            <div class="content-col-wide">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h3>Chamados por Status</h3>
+                                    </div>
+                                    <div class="card-content">
+                                        <div class="chart-container">
+                                            <canvas id="status-chart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="content-col-narrow">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h3>Distribuição por Prioridade</h3>
+                                    </div>
+                                    <div class="card-content">
+                                        <div class="chart-container">
+                                            <canvas id="priority-chart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Chamados Recentes</h3>
+                                <button id="view-all-tickets" class="btn btn-secondary btn-sm">
+                                    <i class="fas fa-list"></i>
+                                    <span class="btn-text">Ver Todos</span>
+                                </button>
+                            </div>
+                            <div class="card-content">
+                                <table class="tickets-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Chamado</th>
+                                            <th>Cliente</th>
+                                            <th>Status</th>
+                                            <th>Data de Registro</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="recent-tickets-body">
+                                        <tr>
+                                            <td colspan="4" class="placeholder-text">Nenhum chamado encontrado</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chamados Page -->
+                    <div id="chamados-page" class="page">
+                        <div class="page-header">
+                            <div>
+                                <h2>Chamados</h2>
+                                <p>Gerencie todos os chamados do sistema</p>
+                            </div>
+                            <div class="header-actions">
+                                <button id="new-ticket-btn" class="btn btn-primary btn-icon" title="Novo Chamado">
+                                    <i class="fas fa-plus"></i>
+                                    <span class="btn-text">Novo Chamado</span>
+                                </button>
+                                <button id="import-tickets-btn" class="btn btn-success btn-icon" title="Importar Chamados">
+                                    <i class="fas fa-file-import"></i>
+                                    <span class="btn-text">Importar</span>
+                                </button>
+                                <button id="export-tickets-btn" class="btn btn-secondary btn-icon" title="Exportar Chamados">
+                                    <i class="fas fa-file-export"></i>
+                                    <span class="btn-text">Exportar</span>
+                                </button>
+                                <button id="delete-all-tickets" class="btn btn-danger btn-icon" title="Excluir Todos os Chamados">
+                                    <i class="fas fa-trash"></i>
+                                    <span class="btn-text">Excluir Todos</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Todos os Chamados</h3>
+                                <div class="header-actions">
+                                    <button id="filter-tickets" class="btn btn-secondary btn-sm">
+                                        <i class="fas fa-filter"></i>
+                                        <span class="btn-text">Filtrar</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-content">
+                                <table class="tickets-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Chamado</th>
+                                            <th>Cliente</th>
+                                            <th>Prioridade</th>
+                                            <th>Status</th>
+                                            <th>Data de Registro</th>
+                                            <th>Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tickets-table-body">
+                                        <tr>
+                                            <td colspan="6" class="placeholder-text">Nenhum chamado encontrado</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Extrair Chamados Page -->
+<div id="capturar-page" class="page">
+    <div class="capture-section">
+        <div class="card">
+            <!-- Cabeçalho Centralizado -->
+            <div class="card-header">
+                <h3>🎯 Cole o conteúdo abaixo para extrair dados automaticamente </h3>
+              </div>
+            <!-- Formulário Centralizado -->
+            <div class="form-group">
+                <label for="conteudo-pagina">📋 Conteúdo da Página do Chamado</label>
+                <textarea 
+                    id="conteudo-pagina" 
+                    class="form-input form-textarea" 
+                    placeholder="Cole aqui o conteúdo copiado da página do chamado MQ360º..."
+                    title="Cole o conteúdo completo da página do chamado"
+                ></textarea>
+                
+                <div class="help-text">
+                    <strong>💡 Como copiar:</strong><br>
+                    Pressione <kbd>Ctrl+A</kbd> (selecionar tudo) → <kbd>Ctrl+C</kbd> (copiar)<br>
+                    Depois cole aqui com <kbd>Ctrl+V</kbd>
+                </div>
+            </div>
+
+            <!-- Botões Centralizados -->
+            <div class="capture-actions">
+                <button id="extrair-dados-btn" class="btn btn-primary capture-btn">
+                    <i class="fas fa-search"></i>
+                    Analisar Conteúdo
+                </button>
+                <button id="save-ticket-btn" class="btn btn-success capture-btn hidden">
+                    <i class="fas fa-save"></i>
+                    Salvar Chamado
+                </button>
+            </div>
+
+            <!-- Resultados Centralizados -->
+            <div id="extracted-summary" class="extracted-summary hidden">
+                <h4>📊 Resultados da Análise</h4>
+                <div id="extracted-data">
+                    <!-- Dados extraídos serão exibidos aqui -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+                    <!-- Relatórios Page -->
+                    <div id="relatorios-page" class="page">
+                        <div class="page-header">
+                            <div>
+                                <h2>Relatórios</h2>
+                                <p>Relatórios e análises dos chamados</p>
+                            </div>
+                            <div class="header-actions">
+                                <button id="generate-report-pdf" class="btn btn-primary btn-icon" title="Exportar Relatório PDF">
+                                    <i class="fas fa-file-pdf"></i>
+                                    <span class="btn-text">Exportar PDF</span>
+                                </button>
+                                                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Relatórios Disponíveis</h3>
+                            </div>
+                            <div class="card-content">
+                                <div class="form-row">
+                                    <div class="form-col">
+                                        <div class="form-group">
+                                            <label for="relatorio-tipo">Tipo de Relatório</label>
+                                            <select id="relatorio-tipo" class="form-select">
+                                                <option value="chamados-por-status">Chamados por Status</option>
+                                                <option value="chamados-por-cliente">Chamados por Cliente</option>
+                                                <option value="tempo-resolucao">Tempo Médio de Resolução</option>
+                                                <option value="chamados-mensal">Chamados Mensais</option>
+ </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-col">
+                                        <div class="form-group">
+                                            <label for="periodo">Período</label>
+                                            <select id="periodo" class="form-select">
+                                                <option value="7">Últimos 7 dias</option>
+                                                <option value="30" selected>Últimos 30 dias</option>
+                                                <option value="90">Últimos 3 meses</option>
+                                                <option value="365">Último ano</option>
+                                                <option value="all">Todo o período</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button id="gerar-relatorio-btn" class="btn btn-primary">
+                                    <i class="fas fa-chart-bar"></i>
+                                    Gerar Relatório
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 id="report-title">Relatório de Chamados por Status</h3>
+                            </div>
+                            <div class="card-content">
+                                <div id="report-content">
+                                    <p>Selecione as opções e clique em "Gerar Relatório" para visualizar os dados.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Agendamentos Page -->
+                    <div id="agendamentos-page" class="page">
+                        <div class="page-header">
+                            <div>
+                                <h2>Agendamentos</h2>
+                                <p>Agende chamados para datas futuras</p>
+                            </div>
+                            <div class="header-actions">
+                                <button id="new-schedule-btn" class="btn btn-primary btn-icon" title="Novo Agendamento">
+                                    <i class="fas fa-plus"></i>
+                                    <span class="btn-text">Novo Agendamento</span>
+                                </button>
+                                <button id="delete-all-schedules" class="btn btn-danger btn-icon" title="Excluir Todos os Agendamentos">
+                                    <i class="fas fa-trash"></i>
+                                    <span class="btn-text">Excluir Todos</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Agendamentos Futuros</h3>
+                            </div>
+                            <div class="card-content">
+                               <table class="tickets-table">
+    <thead>
+        <tr>
+            <th>Chamado</th>
+            <th>Cliente</th>
+            <th>Data Agendada</th>
+            <th>Responsável</th>
+            <th>Observações</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody id="schedules-table-body">
+        <!-- Conteúdo será preenchido via JavaScript -->
+    </tbody>
+</table>
+                            </div>
+                        </div>
+                    </div>
+
+
+                      <!-- Chamados Finalizados Page -->
+<div id="chamados-finalizados-page" class="page">
+    <div class="page-header">
+        <div>
+            <h2>Chamados Finalizados</h2>
+            <p>Chamados com status Finalizado</p>
+        </div>
+            </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3>Chamados Finalizados</h3>
+                    </div>
+        <div class="card-content">
+            <table class="tickets-table">
+    <thead>
+        <tr>
+            <th>Chamado</th>
+            <th>Cliente</th>
+            <th>Prioridade</th>
+            <th>Status</th>
+            <th>Data de Registro</th>
+            <th>Data de Finalização</th>
+            <th>Observações</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody id="finished-tickets-table-body">
+        <tr>
+            <td colspan="8" class="placeholder-text">Nenhum chamado finalizado encontrado</td>
+        </tr>
+    </tbody>
+</table>
+        </div>
+    </div>
+</div>
+
+                    <!-- Configurações Page -->
+                    <div id="configuracoes-page" class="page">
+                        <div class="page-header">
+                            <h2>Configurações</h2>
+                            <p>Configure as preferências do sistema</p>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Preferências de Usuário</h3>
+                            </div>
+                            <div class="card-content">
+                                <div class="form-group">
+                                    <label for="tema">Tema</label>
+                                    <select id="tema" class="form-select">
+                                        <option value="claro" selected>Claro</option>
+                                        <option value="escuro">Escuro</option>
+                                        <option value="auto">Automático</option>
+                                    </select>
+                                </div>
+                                  <div class="form-group">
+                                    <label for="notifications-enabled">Notificações Push</label>
+                                    <select id="notifications-enabled" class="form-select">
+                                        <option value="true" selected>Ativadas</option>
+                                        <option value="false">Desativadas</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-primary" id="save-user-preferences">
+                                    <i class="fas fa-save"></i>
+                                    Salvar Preferências
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card">
+    <div class="card-header">
+        <h3>Gerenciar Status</h3>
+    </div>
+    <div class="card-content">
+        <div class="form-group">
+            <label for="novo-status">Adicionar Novo Status</label>
+            <input type="text" id="novo-status" class="form-input" placeholder="Digite o nome do novo status">
+        </div>
+        <button id="add-status-btn" class="btn btn-primary">
+            <i class="fas fa-plus"></i>
+            Adicionar Status
+        </button>
+        
+        <div class="mt-4">
+            <h4>Status Disponíveis</h4>
+            <ul id="status-list" class="field-list">
+                <!-- Lista de status será preenchida via JavaScript -->
+            </ul>
+        </div>
+    </div>
+</div>
+
+                        <!-- NOVA SEÇÃO: Backup e Restauração -->
+                        <div class="card backup-restore-section">
+                            <div class="card-header">
+                                <h3>Backup e Restauração</h3>
+                            </div>
+                            <div class="card-content">
+                                <div class="backup-actions">
+                                    <button id="backup-system-btn" class="btn btn-primary">
+                                        <i class="fas fa-download"></i>
+                                        Fazer Backup do Sistema
+                                    </button>
+                                    <button id="restore-system-btn" class="btn btn-warning">
+                                        <i class="fas fa-upload"></i>
+                                        Restaurar Sistema
+                                    </button>
+                                </div>
+                                <div class="backup-info">
+                                    <p><strong>Backup do Sistema:</strong> Cria um arquivo JSON com todos os dados do sistema (chamados, agendamentos, configurações e status personalizados).</p>
+                                    <p><strong>Restauração do Sistema:</strong> Restaura todos os dados a partir de um arquivo de backup anterior. <strong>Atenção:</strong> Esta ação substituirá todos os dados atuais.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+<!-- Modal de Filtro -->
+<div id="filtro-modal" class="modal filtro-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Filtrar Chamados</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+
+<div class="filtro-section">
+    <h4>Número do Chamado</h4>
+    <input type="text" id="filtro-numero-chamado" class="form-input" placeholder="Digite o número do chamado...">
+</div>
+
+            <div class="filtro-section">
+                <h4>Status</h4>
+                <select id="filtro-status" class="form-select">
+                    <option value="">Todos os status</option>
+                    <option value="Aguardando Cliente">Aguardando Cliente</option>
+                    <option value="Aguardando Retorno">Aguardando Retorno</option>
+                    <option value="Em Analise">Em Analise</option>
+                    <option value="Finalizado">Finalizado</option>
+                </select>
+            </div>
+
+            <div class="filtro-section">
+                <h4>Prioridade</h4>
+                <select id="filtro-prioridade" class="form-select">
+                    <option value="">Todas as prioridades</option>
+                    <option value="Baixa">Baixa</option>
+                    <option value="Média">Média</option>
+                    <option value="Alta">Alta</option>
+                </select>
+            </div>
+
+              
+            <div class="filtro-section">
+                <h4>Cliente</h4>
+                <input type="text" id="filtro-cliente" class="form-input" placeholder="Digite o nome do cliente...">
+            </div>
+
+            <div class="filtro-section">
+                <h4>Data de Registro</h4>
+                <div class="filtro-row">
+                    <div class="filtro-col">
+                        <label for="filtro-data-inicio" style="display: block; margin-bottom: 5px; font-size: 14px;">De:</label>
+                        <input type="date" id="filtro-data-inicio" class="form-input">
+                    </div>
+                    <div class="filtro-col">
+                        <label for="filtro-data-fim" style="display: block; margin-bottom: 5px; font-size: 14px;">Até:</label>
+                        <input type="date" id="filtro-data-fim" class="form-input">
+                    </div>
+                </div>
+            </div>
+
+            <div class="filtro-actions">
+                <button id="limpar-filtros" class="btn btn-secondary">Limpar Filtros</button>
+                <button id="aplicar-filtros" class="btn btn-primary">Aplicar Filtros</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+        <!-- Modal para Novo Chamado -->
+        <div id="ticket-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modal-title">Novo Chamado</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="ticket-form">
+                        <div class="form-group">
+                            <label for="ticket-url">URL do Chamado</label>
+                            <input type="text" id="ticket-url" class="form-input" placeholder="https://meuespaco.mastermaq.com.br/...">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-col">
+                                <div class="form-group">
+                                    <label for="ticket-cliente">Cliente</label>
+                                    <input type="text" id="ticket-cliente" class="form-input">
+                                </div>
+                            </div>
+                            <div class="form-col">
+                                <div class="form-group">
+                                    <label for="ticket-sistema">Sistema</label>
+                                    <input type="text" id="ticket-sistema" class="form-input">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="ticket-data-registro">Data de Registro</label>
+                            <input type="datetime-local" id="ticket-data-registro" class="form-input">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-col">
+                                <div class="form-group">
+                                    <label for="ticket-prioridade">Prioridade</label>
+                                    <select id="ticket-prioridade" class="form-select">
+                                        <option value="Baixa">Baixa</option>
+                                        <option value="Média">Média</option>
+                                        <option value="Alta">Alta</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-col">
+                                <div class="form-group">
+                                    <label for="ticket-status">Status</label>
+                                    <select id="ticket-status" class="form-select">
+                                        <!-- Opções serão preenchidas via JavaScript -->
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="ticket-descricao">Descrição</label>
+                            <textarea id="ticket-descricao" class="form-textarea"></textarea>
+                        </div>
+                        <!-- Adicione isso após o campo de descrição -->
+<div class="form-group" id="observacoes-group" style="display: none;">
+    <label for="ticket-observacoes">Observações (apenas para chamados finalizados)</label>
+    <textarea id="ticket-observacoes" class="form-textarea" rows="4" placeholder="Digite observações sobre o chamado finalizado..."></textarea>
+</div>
+
+                        <input type="hidden" id="ticket-id">
+                        <input type="hidden" id="ticket-numero-chamado">
+                    </form>
+                </div>
+                 <div class="modal-footer">
+            <button id="cancel-ticket" class="btn btn-secondary">Cancelar</button>
+            <button id="save-ticket-modal" class="btn btn-primary">Salvar</button>
+        </div>
+    </div>
+</div>
+
+        <!-- Modal para Agendamento -->
+        <div id="schedule-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Novo Agendamento</h3>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="schedule-form">
+                        <div class="form-group">
+                            <label for="schedule-ticket">Chamado</label>
+                            <select id="schedule-ticket" class="form-select" required>
+                                <!-- Opções serão preenchidas via JavaScript -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="schedule-date">Data do Agendamento</label>
+                            <input type="datetime-local" id="schedule-date" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="schedule-responsible">Responsável</label>
+                            <input type="text" id="schedule-responsible" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="schedule-notes">Observações</label>
+                            <textarea id="schedule-notes" class="form-textarea"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button id="cancel-schedule" class="btn btn-secondary">Cancelar</button>
+                    <button id="save-schedule" class="btn btn-primary">Salvar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de Histórico -->
+        <div id="history-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Histórico de Status</h3>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div id="history-content">
+                        <!-- Conteúdo do histórico será preenchido via JavaScript -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="close-history" class="btn btn-secondary">Fechar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Container para notificações -->
+<div id="notification-container" class="notification-container"></div>
+
+<!-- Modal para alteração de status -->
+<div id="status-change-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Alterar Status do Chamado</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="status-change-message">O agendamento deste chamado venceu. Para qual status você deseja alterar?</p>
+            
+            <div class="form-group">
+                <label for="new-status-select">Novo Status:</label>
+                <select id="new-status-select" class="form-control">
+                    <!-- Opções serão preenchidas via JavaScript -->
+                </select>
+            </div>
+            
+            <input type="hidden" id="expired-ticket-id">
+            <input type="hidden" id="expired-schedule-id">
+        </div>
+        <div class="modal-footer">
+            <button type="button" id="cancel-status-change" class="btn btn-secondary">Cancelar</button>
+            <button type="button" id="save-status-change" class="btn btn-primary">Salvar Status</button>
+        </div>
+    </div>
+</div>
+
+        <!-- Input para importação de arquivos (oculto) -->
+        <input type="file" id="file-import" accept=".xlsx,.xls" style="display: none;">
+
+        <!-- Input para restauração de backup (oculto) -->
+        <input type="file" id="backup-restore-input" accept=".json" style="display: none;">
+
+        <!-- Notificações -->
+        <div id="notification-container">
+            <!-- Notificações serão adicionadas aqui dinamicamente -->
+        </div>
+
+        <!-- Container para Push Notifications -->
+        <div id="push-notification-container">
+            <!-- Push notifications serão adicionadas aqui dinamicamente -->
+        </div>
+    </div>
+
+      <script src="Script.js"></script>
+    </body>
+</html>
